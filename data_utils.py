@@ -184,8 +184,17 @@ def vectorize_data(data, word_idx, sentence_size, batch_size, candidates_size, m
     S = []
     Q = []
     A = []
-    data.sort(key=lambda x:len(x[0]),reverse=True)
+    # data.sort(key=lambda x:len(x[0]),reverse=True)
+    dialog_idx = []
+    start = -1
     for i, (story, query, answer) in enumerate(data):
+        if len(story) == 0:
+            if start == -1:
+                start = i
+            else:
+                dialog_idx.append([start, i-1])
+                start = i
+
         if i%batch_size==0:
             memory_size=max(1,min(max_memory_size,len(story)))
         ss = []
