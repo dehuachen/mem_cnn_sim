@@ -1,7 +1,7 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from torch.autograd import Variable
+from torch.autograd import Variable as V
 from torch import optim
 
 from model.cnn import CNN
@@ -21,15 +21,47 @@ class MemCnnSim(nn.Module):
         self.criterion = nn.CosineEmbeddingLoss(margin=margin)
         self.optimizer = optim.Adam(self.parameters(), lr=1e-2)
 
-    def forward(self, utter, memory, cand, flag):
+    def forward(self, utter, memory, cand):
+
+        cand_size = cand.size(0)
 
         context = self.memn2n(utter, memory)
+        context = context.repeat(cand_size, 1)
+
         cand_ = self.cnn(cand)
 
         return context, cand_
 
-    def loss_op(self, context, cand_):
-        loss = self.criterion(context, cand_)
+    def loss_op(self, context, cand_, flag):
+        loss = self.criterion(context, cand_, flag)
         return loss
 
+    def optimize(self, loss):
+        self.optimizer.zero_grad()
+        loss.backward()
+        self.optimizer.step()
 
+
+# if __name__ == '__main__':
+#     param = {
+#             'hops': 3,
+#             "vocab_size": 20,
+#             "embedding_size": 20,
+#             'num_filters': 20,
+#             "cand_vocab_size": 20
+#              }
+#
+#     mem = MemCnnSim(param)
+#
+#     for i in range(20):
+#         # print(param)
+#         memory = torch.ones(1, 3, 10).long()
+#         utter = torch.ones(1, 10).long()
+#         cand = torch.ones(30, 10).long()
+#         flag = torch.ones(30, 1).long()
+#
+#         context, cand = mem(V(utter), V(memory), V(cand))
+#         loss = mem.loss_op(context, cand, V(flag))
+#         print(loss)
+#
+#         mem.optimize(loss)
