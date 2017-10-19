@@ -4,6 +4,7 @@ import torch.nn.functional as F
 from torch.autograd import Variable
 from torch import optim
 
+
 class MemCnnSim(nn.Module):
 
     def __init__(self, margin):
@@ -16,7 +17,6 @@ class MemCnnSim(nn.Module):
 
         self.criterion = nn.CosineEmbeddingLoss(margin=0.5)
 
-
     def forward(self, utter, memory, cand, flag):
 
         context = self.memn2n(utter, memory)
@@ -24,30 +24,8 @@ class MemCnnSim(nn.Module):
 
         return context, cand_
 
-
     def loss_op(self, context, cand_):
         loss = self.criterion(context, cand_)
         return loss
 
 
-
-
-class MemN2N(nn.Module):
-
-    def __init__(self):
-        super(MemN2N, self).__init__()
-
-
-    def forward(self, utter, memory):
-        pass
-
-
-
-
-class CNN(nn.Module):
-
-    def __init__(self):
-        super(CNN, self).__init__()
-
-    def forward(self, cand):
-        pass
