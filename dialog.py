@@ -163,11 +163,12 @@ if __name__ == '__main__':
     print("Validation Size", n_val)
 
     param = {
-            'hops': 1,
+            'hops': 3,
             "vocab_size": vocab_size,
             "embedding_size": 80,
             'num_filters': 20,
-            "cand_vocab_size": vocab_size
+            "cand_vocab_size": vocab_size,
+            'max_grad_norm': 40.0
              }
 
     mem_cnn_sim = MemCnnSim(param)

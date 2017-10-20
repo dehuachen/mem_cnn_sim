@@ -15,6 +15,8 @@ class MemCnnSim(nn.Module):
 
         self.param = param
 
+        self.max_grad_norm = param['max_grad_norm']
+
         self.memn2n = MemN2N(param)
         self.cnn = CNN(param)
 
@@ -45,6 +47,7 @@ class MemCnnSim(nn.Module):
     def optimize(self, loss):
         self.optimizer.zero_grad()
         loss.backward()
+        nn.utils.clip_grad_norm(self.parameters(), self.max_grad_norm)
         self.optimizer.step()
 
 

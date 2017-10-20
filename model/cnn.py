@@ -18,7 +18,9 @@ class CNN(nn.Module):
         self.embedding = nn.Embedding(self.vocab_size, self.embedding_size)
 
         # a possible modification is apply n convolutions
-        self.cnn = nn.Conv2d(1, self.num_filters, (2, self.embedding_size))
+        self.cnn = nn.Conv2d(1, self.num_filters, (1, self.embedding_size))
+        # self.cnn2 = nn.Conv2d(1, self.num_filters, (2, self.embedding_size))
+        # self.cnn3 = nn.Conv2d(1, self.num_filters, (3, self.embedding_size))
 
         self.linear = nn.Linear(self.num_filters, self.embedding_size)
 
