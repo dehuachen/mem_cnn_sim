@@ -170,7 +170,7 @@ def vectorize_candidates(candidates,word_idx,sentence_size):
     return np.array(C)
 
 
-def vectorize_data(data, word_idx, sentence_size, batch_size, candidates_size, max_memory_size):
+def vectorize_data(data, word_idx, sentence_size, max_memory_size, train_mode=True):
     """
     Vectorize stories and queries.
 
@@ -188,15 +188,15 @@ def vectorize_data(data, word_idx, sentence_size, batch_size, candidates_size, m
     dialog_idx = []
     start = -1
     for i, (story, query, answer) in enumerate(data):
-        if len(story) == 0:
-            if start == -1:
-                start = i
-            else:
-                dialog_idx.append([start, i-1])
-                start = i
+        if train_mode:
+            if len(story) == 0:
+                if start == -1:
+                    start = i
+                else:
+                    dialog_idx.append([start, i-1])
+                    start = i
 
-        if i%batch_size==0:
-            memory_size=max(1,min(max_memory_size,len(story)))
+        memory_size=max(1,min(max_memory_size,len(story)))
         ss = []
         for i, sentence in enumerate(story, 1):
             ls = max(0, sentence_size - len(sentence))
@@ -215,5 +215,5 @@ def vectorize_data(data, word_idx, sentence_size, batch_size, candidates_size, m
 
         S.append(np.array(ss))
         Q.append(np.array(q))
-        A.append(np.array(answer))
-    return S, Q, A
+        A.append(answer)
+    return S, Q, A, dialog_idx

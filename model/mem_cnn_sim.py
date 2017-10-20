@@ -34,7 +34,7 @@ class MemCnnSim(nn.Module):
 
     def predict(self, context, cand_):
         sims = F.cosine_similarity(context, cand_)
-        _, pred = torch.max(sims, 1)
+        _, pred = torch.max(sims, 0)
 
         return pred
 
