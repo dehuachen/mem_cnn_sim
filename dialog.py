@@ -43,6 +43,7 @@ def init(data_dir, task_id, OOV=False):
            vocab_size, \
            train_data, test_data, val_data
 
+
 def build_vocab(data, candidates, memory_size=50):
     vocab = reduce(lambda x, y: x | y, (set(
         list(chain.from_iterable(s)) + q) for s, q, a in data))
@@ -71,6 +72,7 @@ def build_vocab(data, candidates, memory_size=50):
            candidate_sentence_size, \
            memory_size, \
            vocab_size
+
 
 def eval(utter_batch, memory_batch, answer__batch, dialog_idx, mem_cnn_sim, cuda=False):
     mem_cnn_sim.eval()
@@ -101,6 +103,14 @@ def eval(utter_batch, memory_batch, answer__batch, dialog_idx, mem_cnn_sim, cuda
     accuracy = metrics.accuracy_score(answer__batch[:len(preds)], preds)
     print('Validation accuracy: {}'.format(accuracy))
     print('Validation loss: {}'.format(sum(total_loss)))
+
+
+def transfer_to_gpu(tensor, dtype=torch.LongTensor):
+    tensor_cuda = dtype(tensor.size()).cuda()
+    tensor_cuda = V(tensor_cuda)
+    tensor_cuda.data.copy_(tensor)
+    return tensor_cuda
+
 
 if __name__ == '__main__':
     data_dir = "data/dialog-bAbI-tasks/"
@@ -148,7 +158,7 @@ if __name__ == '__main__':
     num_dialog = len(dialog_idx)
 
     if cuda:
-        cands_tensor.cuda()
+        cands_tensor = transfer_to_gpu(cands_tensor)
 
     for i in range(1, epochs+1):
 
@@ -172,9 +182,9 @@ if __name__ == '__main__':
                 if cuda:
                     mem_cnn_sim.cuda()
 
-                    memory.cuda()
-                    utter.cuda()
-                    flag.cuda()
+                    memory = transfer_to_gpu(memory)
+                    utter = transfer_to_gpu(utter)
+                    flag = transfer_to_gpu(flag, dtype=torch.FloatTensor)
 
                 context, cand_ = mem_cnn_sim(utter, memory, cands_tensor)
                 loss = mem_cnn_sim.loss_op(context, cand_, flag)
