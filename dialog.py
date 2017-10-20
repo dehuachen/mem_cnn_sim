@@ -4,6 +4,7 @@ from data_utils import load_dialog_task, vectorize_data, load_candidates, vector
 from six.moves import range, reduce
 from itertools import chain
 import numpy as np
+import os
 from sklearn import metrics
 from torch.autograd import Variable as V
 
@@ -104,6 +105,8 @@ def eval(utter_batch, memory_batch, answer__batch, dialog_idx, mem_cnn_sim, cuda
     print('Validation accuracy: {}'.format(accuracy))
     print('Validation loss: {}'.format(sum(total_loss)))
 
+    return accuracy
+
 
 def transfer_to_gpu(tensor, dtype=torch.LongTensor):
     tensor_cuda = dtype(tensor.size()).cuda()
@@ -112,10 +115,29 @@ def transfer_to_gpu(tensor, dtype=torch.LongTensor):
     return tensor_cuda
 
 
+def save_checkpoint(state, filename='checkpoint.pth.tar'):
+    torch.save(state, filename)
+
+
+def load_checkpoit(model, optimizer, path_to_model):
+    if os.path.isfile(path_to_model):
+        print("=> loading checkpoint '{}'".format(path_to_model))
+        checkpoint = torch.load(path_to_model)
+        model.load_state_dict(checkpoint['state_dict'])
+        optimizer.load_state_dict(checkpoint['optimizer'])
+        print("=> loaded checkpoint '{}' (epoch {})"
+              .format(path_to_model, checkpoint['epoch']))
+    else:
+        print("=> no checkpoint found at '{}'".format(path_to_model))
+
+
 if __name__ == '__main__':
     data_dir = "data/dialog-bAbI-tasks/"
     task_id = 6
     epochs = 10
+    model_dir = "task" + str(task_id) + "_model/"
+    if not os.path.exists(model_dir):
+        os.makedirs(model_dir)
 
     cuda = torch.cuda.is_available()
     if cuda: print('Cuda is available.')
@@ -193,4 +215,12 @@ if __name__ == '__main__':
                 loss_per_diaglo.append(loss.data[0])
             # print('loss: {}'.format(sum(loss_per_diaglo)/len(loss_per_diaglo)))
             print('[{}/{}]\r'.format(i+1, num_dialog))
-        eval(valQ, valS, valA, dialog_idx_val, mem_cnn_sim, cuda)
+        accuracy = eval(valQ, valS, valA, dialog_idx_val, mem_cnn_sim, cuda)
+
+        if accuracy > best_validation_accuracy:
+            best_validation_accuracy = accuracy
+            save_checkpoint({
+                'epoch': i + 1,
+                'state_dict': mem_cnn_sim.state_dict(),
+                'optimizer': mem_cnn_sim.optimizer.state_dict(),
+            }, True, filename=model_dir + 'best_model')
