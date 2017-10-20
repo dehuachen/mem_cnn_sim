@@ -108,7 +108,7 @@ def eval(utter_batch, memory_batch, answer__batch, dialog_idx, mem_cnn_sim, cuda
 def transfer_to_gpu(tensor, dtype=torch.LongTensor):
     tensor_cuda = dtype(tensor.size()).cuda()
     tensor_cuda = V(tensor_cuda)
-    tensor_cuda.data.copy_(tensor)
+    tensor_cuda.data.copy_(tensor.data)
     return tensor_cuda
 
 
