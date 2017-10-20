@@ -185,16 +185,18 @@ if __name__ == '__main__':
     for i in range(1, epochs+1):
 
         mem_cnn_sim.train()
-        for i, (start, end) in enumerate(dialog_idx):
+        for j, (start, end) in enumerate(dialog_idx):
+
+            print('[{}/{}]\r'.format(i, num_dialog))
 
             loss_per_diaglo = []
 
-            for j in range(start, end+1):
+            for k in range(start, end+1):
 
-                ans = trainA[j]
+                ans = trainA[k]
 
-                memory = V(torch.from_numpy(trainS[j])).unsqueeze(0)
-                utter = V(torch.from_numpy(trainQ[j])).unsqueeze(0)
+                memory = V(torch.from_numpy(trainS[k])).unsqueeze(0)
+                utter = V(torch.from_numpy(trainQ[k])).unsqueeze(0)
 
                 flag = -1 * torch.ones(num_cand)
                 flag[ans] = 1
@@ -214,7 +216,6 @@ if __name__ == '__main__':
 
                 loss_per_diaglo.append(loss.data[0])
             # print('loss: {}'.format(sum(loss_per_diaglo)/len(loss_per_diaglo)))
-            print('[{}/{}]\r'.format(i+1, num_dialog))
         accuracy = eval(valQ, valS, valA, dialog_idx_val, mem_cnn_sim, cuda)
 
         if accuracy > best_validation_accuracy:
@@ -223,4 +224,4 @@ if __name__ == '__main__':
                 'epoch': i + 1,
                 'state_dict': mem_cnn_sim.state_dict(),
                 'optimizer': mem_cnn_sim.optimizer.state_dict(),
-            }, True, filename=model_dir + 'best_model')
+            }, filename=model_dir + 'best_model')
