@@ -72,7 +72,7 @@ def build_vocab(data, candidates, memory_size=50):
            memory_size, \
            vocab_size
 
-def eval(utter_batch, memory_batch, answer__batch, dialog_idx, mem_cnn_sim):
+def eval(utter_batch, memory_batch, answer__batch, dialog_idx, mem_cnn_sim, cuda=False):
     mem_cnn_sim.eval()
 
     total_loss = []
@@ -86,6 +86,9 @@ def eval(utter_batch, memory_batch, answer__batch, dialog_idx, mem_cnn_sim):
             memory = V(torch.from_numpy(memory_batch[j])).unsqueeze(0)
             utter = V(torch.from_numpy(utter_batch[j])).unsqueeze(0)
 
+            if cuda:
+                memory.cuda()
+                utter.cuda()
 
             context, cand_ = mem_cnn_sim(utter, memory, cands_tensor)
             pred = mem_cnn_sim.predict(context, cand_)
@@ -103,7 +106,9 @@ if __name__ == '__main__':
     data_dir = "data/dialog-bAbI-tasks/"
     task_id = 6
     epochs = 10
-    # cuda = torch.
+
+    cuda = torch.cuda.is_available()
+    if cuda: print('Cuda is available.')
 
     candid2indx, \
     indx2candid, \
@@ -139,9 +144,11 @@ if __name__ == '__main__':
     time = []
 
     cands_tensor = V(torch.from_numpy(candidates_vec))
-
     num_cand = cands_tensor.size(0)
     num_dialog = len(dialog_idx)
+
+    if cuda:
+        cands_tensor.cuda()
 
     for i in range(1, epochs+1):
 
@@ -162,6 +169,13 @@ if __name__ == '__main__':
 
                 flag = V(flag)
 
+                if cuda:
+                    mem_cnn_sim.cuda()
+
+                    memory.cuda()
+                    utter.cuda()
+                    flag.cuda()
+
                 context, cand_ = mem_cnn_sim(utter, memory, cands_tensor)
                 loss = mem_cnn_sim.loss_op(context, cand_, flag)
                 mem_cnn_sim.optimize(loss)
@@ -169,4 +183,4 @@ if __name__ == '__main__':
                 loss_per_diaglo.append(loss.data[0])
             # print('loss: {}'.format(sum(loss_per_diaglo)/len(loss_per_diaglo)))
             print('[{}/{}]\r'.format(i+1, num_dialog))
-        eval(valQ, valS, valA, dialog_idx_val, mem_cnn_sim)
+        eval(valQ, valS, valA, dialog_idx_val, mem_cnn_sim, cuda)
