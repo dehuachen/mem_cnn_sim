@@ -32,6 +32,12 @@ class MemCnnSim(nn.Module):
 
         return context, cand_
 
+    def predict(self, context, cand_):
+        sims = F.cosine_similarity(context, cand_)
+        _, pred = torch.max(sims, 1)
+
+        return pred
+
     def loss_op(self, context, cand_, flag):
         loss = self.criterion(context, cand_, flag)
         return loss
