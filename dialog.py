@@ -89,8 +89,8 @@ def eval(utter_batch, memory_batch, answer__batch, dialog_idx, mem_cnn_sim, cuda
             utter = V(torch.from_numpy(utter_batch[j])).unsqueeze(0)
 
             if cuda:
-                memory.cuda()
-                utter.cuda()
+                memory = transfer_to_gpu(memory)
+                utter = transfer_to_gpu(utter)
 
             context, cand_ = mem_cnn_sim(utter, memory, cands_tensor)
             pred = mem_cnn_sim.predict(context, cand_)
