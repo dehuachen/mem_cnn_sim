@@ -188,7 +188,8 @@ if __name__ == '__main__':
         mem_cnn_sim.train()
         for j, (start, end) in enumerate(dialog_idx):
 
-            print('[{}/{}]\r'.format(j, num_dialog))
+            if j%99 == 0:
+                print('[{}/{}]\r'.format(j+1, num_dialog))
 
             loss_per_diaglo = []
 

@@ -6,7 +6,7 @@ from torch.autograd import Variable as V
 
 class CNN(nn.Module):
 
-    def __init__(self, param):
+    def __init__(self, param, embedding=None):
         super(CNN, self).__init__()
 
         self.param = param
@@ -15,10 +15,13 @@ class CNN(nn.Module):
         self.embedding_size = param['embedding_size']
         self.num_filters = param['num_filters']
 
-        self.embedding = nn.Embedding(self.vocab_size, self.embedding_size)
+        if embedding:
+            self.embedding = embedding
+        else:
+            self.embedding = nn.Embedding(self.vocab_size, self.embedding_size)
 
         # a possible modification is apply n convolutions
-        self.cnn = nn.Conv2d(1, self.num_filters, (1, self.embedding_size))
+        self.cnn = nn.Conv2d(1, self.num_filters, (2, self.embedding_size))
         # self.cnn2 = nn.Conv2d(1, self.num_filters, (2, self.embedding_size))
         # self.cnn3 = nn.Conv2d(1, self.num_filters, (3, self.embedding_size))
 

@@ -2,6 +2,8 @@ import torch.nn as nn
 import torch
 from torch.autograd import Variable as V
 
+from model.cnn import CNN
+
 
 class MemN2N(nn.Module):
 
@@ -15,6 +17,7 @@ class MemN2N(nn.Module):
         self.embedding_size = param['embedding_size']
 
         self.embedding = nn.Embedding(self.vocab_size, self.embedding_size)
+        self.cnn = CNN(param, embedding=self.embedding)
         self.linear = nn.Linear(self.embedding_size, self.embedding_size)
 
         self.softmax = nn.Softmax()
@@ -23,13 +26,17 @@ class MemN2N(nn.Module):
 
     def forward(self, utter, memory):
         # embed query
-        utter_emb = self.embedding(utter)
-        utter_emb_sum = torch.sum(utter_emb, 1)
+        # utter_emb = self.embedding(utter)
+        # utter_emb_sum = torch.sum(utter_emb, 1)
+        utter_emb_sum = self.cnn(utter)
         contexts = [utter_emb_sum]
 
         for _ in range(self.hops):
-            memory_emb = self.embed_3d(memory, self.embedding)
-            memory_emb_sum = torch.sum(memory_emb, 2)
+            # memory_emb = self.embed_3d(memory, self.embedding)
+            # memory_emb_sum = torch.sum(memory_emb, 2)
+            memory_unbound = torch.unbind(memory, 1)  # [ batch_size * memory_size ] * num_memory
+            memory_emb_sum = [self.cnn(story) for story in memory_unbound]  # [ batch_size * embed_size ] * num_memory
+            memory_emb_sum = torch.stack(memory_emb_sum, 1)  # batch_size * num_memory * embed_size
 
             # get attention
             context_temp = torch.transpose(torch.unsqueeze(contexts[-1], -1), 1, 2)
