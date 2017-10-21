@@ -131,6 +131,26 @@ def load_checkpoit(model, optimizer, path_to_model):
         print("=> no checkpoint found at '{}'".format(path_to_model))
 
 
+def load_model(model, model_dir):
+    load_checkpoit(model, model.optimizer, model_dir+'best_model')
+
+
+def test_model(mem_cnn_sim):
+
+    for i in range(20):
+        utter = V(torch.LongTensor([1,1,1])).unsqueeze(0)
+        memory = V(torch.LongTensor([[1,2,3], [4,5,6]])).unsqueeze(0)
+        cand = V(torch.LongTensor([[7,8,9], [10,11,12], [13,14,15], [16,17,18]]))
+        flag = V(torch.FloatTensor([0,0,0,1]))
+
+        context, cand_ = mem_cnn_sim(utter, memory, cand)
+        loss = mem_cnn_sim.loss_op(context, cand_, flag)
+        pred = mem_cnn_sim.predict(context, cand_)
+        mem_cnn_sim.optimize(loss)
+
+        print('loss: {}, pred: {}'.format(loss.data[0], pred.data[0]))
+
+
 if __name__ == '__main__':
     data_dir = "data/dialog-bAbI-tasks/"
     task_id = 6
@@ -138,6 +158,7 @@ if __name__ == '__main__':
     model_dir = "task" + str(task_id) + "_model/"
     if not os.path.exists(model_dir):
         os.makedirs(model_dir)
+    test_ = False
 
     cuda = torch.cuda.is_available()
     if cuda: print('Cuda is available.')
@@ -172,6 +193,10 @@ if __name__ == '__main__':
              }
 
     mem_cnn_sim = MemCnnSim(param)
+
+    if test_:
+        test_model(mem_cnn_sim)
+        input()
 
     best_validation_accuracy = 0
     time = []
