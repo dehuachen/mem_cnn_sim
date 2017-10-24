@@ -1,3 +1,4 @@
+import sys
 import torch
 
 from data_utils import load_dialog_task, vectorize_data, load_candidates, vectorize_candidates, tokenize
@@ -209,39 +210,42 @@ if __name__ == '__main__':
         cands_tensor = transfer_to_gpu(cands_tensor)
 
     for i in range(1, epochs+1):
-
+        num_ = [x for x in range(len(trainS))]
+        np.random.shuffle(num_)
         mem_cnn_sim.train()
-        for j, (start, end) in enumerate(dialog_idx):
+        # for j, (start, end) in enumerate(dialog_idx):
+        #
+        #     if j%99 == 0:
+        #         print('[{}/{}]\r'.format(j+1, num_dialog))
+        #
+        #     loss_per_diaglo = []
 
-            if j%99 == 0:
-                print('[{}/{}]\r'.format(j+1, num_dialog))
+        for j, k in enumerate(num_):
 
-            loss_per_diaglo = []
+            ans = trainA[k]
 
-            for k in range(start, end+1):
+            memory = V(torch.from_numpy(trainS[k])).unsqueeze(0)
+            utter = V(torch.from_numpy(trainQ[k])).unsqueeze(0)
 
-                ans = trainA[k]
+            flag = -1 * torch.ones(num_cand)
+            flag[ans] = 1
 
-                memory = V(torch.from_numpy(trainS[k])).unsqueeze(0)
-                utter = V(torch.from_numpy(trainQ[k])).unsqueeze(0)
+            flag = V(flag)
 
-                flag = -1 * torch.ones(num_cand)
-                flag[ans] = 1
+            if cuda:
+                mem_cnn_sim.cuda()
 
-                flag = V(flag)
+                memory = transfer_to_gpu(memory)
+                utter = transfer_to_gpu(utter)
+                flag = transfer_to_gpu(flag, dtype=torch.FloatTensor)
 
-                if cuda:
-                    mem_cnn_sim.cuda()
+            context, cand_ = mem_cnn_sim(utter, memory, cands_tensor)
+            loss = mem_cnn_sim.loss_op(context, cand_, flag)
+            mem_cnn_sim.optimize(loss)
 
-                    memory = transfer_to_gpu(memory)
-                    utter = transfer_to_gpu(utter)
-                    flag = transfer_to_gpu(flag, dtype=torch.FloatTensor)
-
-                context, cand_ = mem_cnn_sim(utter, memory, cands_tensor)
-                loss = mem_cnn_sim.loss_op(context, cand_, flag)
-                mem_cnn_sim.optimize(loss)
-
-                loss_per_diaglo.append(loss.data[0])
+            if j % 99 == 0:
+                sys.stdout.write('\r{}/{}'.format(j, len(trainS)))
+            # loss_per_diaglo.append(loss.data[0])
             # print('loss: {}'.format(sum(loss_per_diaglo)/len(loss_per_diaglo)))
         accuracy = eval(valQ, valS, valA, dialog_idx_val, mem_cnn_sim, cuda)
 
