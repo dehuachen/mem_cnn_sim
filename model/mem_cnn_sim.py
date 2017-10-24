@@ -17,7 +17,8 @@ class MemCnnSim(nn.Module):
 
         self.max_grad_norm = param['max_grad_norm']
 
-        self.memn2n = MemN2N(param)
+        self.memn2n = CNN(param)
+        # self.memn2n = MemN2N(param)
         self.cnn = CNN(param)
 
         self.criterion = nn.CosineEmbeddingLoss(margin=margin)
@@ -27,7 +28,8 @@ class MemCnnSim(nn.Module):
 
         cand_size = cand.size(0)
 
-        context = self.memn2n(utter, memory)
+        x = torch.cat([utter, memory.view(1, -1)], 1)
+        context = self.memn2n(x)
         context = context.repeat(cand_size, 1)
 
         cand_ = self.cnn(cand)

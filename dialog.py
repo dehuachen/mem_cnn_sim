@@ -103,6 +103,7 @@ def eval(utter_batch, memory_batch, answer__batch, dialog_idx, mem_cnn_sim, cuda
         total_loss += loss_per_diaglo
 
     accuracy = metrics.accuracy_score(answer__batch[:len(preds)], preds)
+    print()
     print('Validation accuracy: {}'.format(accuracy))
     print('Validation loss: {}'.format(sum(total_loss)))
 
@@ -243,7 +244,7 @@ if __name__ == '__main__':
             loss = mem_cnn_sim.loss_op(context, cand_, flag)
             mem_cnn_sim.optimize(loss)
 
-            if j % 99 == 0:
+            if j % 100 == 0:
                 sys.stdout.write('\r{}/{}'.format(j, len(trainS)))
             # loss_per_diaglo.append(loss.data[0])
             # print('loss: {}'.format(sum(loss_per_diaglo)/len(loss_per_diaglo)))
