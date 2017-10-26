@@ -22,7 +22,7 @@ class MemCnnSim(nn.Module):
         self.cnn = CNN(param)
 
         self.criterion = nn.CosineEmbeddingLoss(margin=margin)
-        self.optimizer = optim.Adam(self.parameters(), lr=1e-2)
+        self.optimizer = optim.Adam(self.parameters(), lr=0.00005)
 
     def forward(self, utter, memory, cand):
 
