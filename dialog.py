@@ -114,7 +114,7 @@ def eval(utter_batch, memory_batch, answer__batch, dialog_idx, mem_cnn_sim, cuda
     return accuracy
 
 
-def interactive(model, indx2candid, cand_vec, word_idx, sentence_size, memory_size, cuda=False):
+def interactive(model, indx2candid, cands_tensor, word_idx, sentence_size, memory_size, cuda=False):
     context = []
     u = None
     r = None
@@ -139,8 +139,8 @@ def interactive(model, indx2candid, cand_vec, word_idx, sentence_size, memory_si
             memory = transfer_to_gpu(memory)
             utter = transfer_to_gpu(utter)
 
-        context, cand_ = mem_cnn_sim(utter, memory, cands_tensor)
-        preds = mem_cnn_sim.predict(context, cand_)
+        context_, cand_ = model(utter, memory, cands_tensor)
+        preds = model.predict(context_, cand_)
         r = indx2candid[preds.data[0]]
         print(r)
         r = tokenize(r)
