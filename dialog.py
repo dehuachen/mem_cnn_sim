@@ -139,8 +139,9 @@ def interactive(model, indx2candid, cand_vec, word_idx, sentence_size, memory_si
             memory = transfer_to_gpu(memory)
             utter = transfer_to_gpu(utter)
 
-        preds = list(model.predict(utter, memory, cand_vec).data.cpu().numpy().tolist())
-        r = indx2candid[preds[0]]
+        context, cand_ = mem_cnn_sim(utter, memory, cands_tensor)
+        preds = mem_cnn_sim.predict(context, cand_)
+        r = indx2candid[preds.data[0]]
         print(r)
         r = tokenize(r)
         u.append('$u')
@@ -210,7 +211,7 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     data_dir = "data/dialog-bAbI-tasks/"
-    task_id = 6
+    task_id = 1
     epochs = 20
     model_dir = "task" + str(task_id) + "_model/"
     if not os.path.exists(model_dir):
