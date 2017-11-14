@@ -269,7 +269,7 @@ if __name__ == '__main__':
         cands_tensor = transfer_to_gpu(cands_tensor)
 
     if args.interactive:
-        load_model(mem_cnn_sim, 'task{}+model/'.format(task_id))
+        load_model(mem_cnn_sim, 'task{}_model/'.format(task_id))
         interactive(mem_cnn_sim, indx2candid, cands_tensor, word_idx, sentence_size, memory_size, cuda)
 
     for i in range(1, epochs+1):
