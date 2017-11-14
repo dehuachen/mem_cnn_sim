@@ -1,6 +1,7 @@
 import sys
 import torch
 
+import argparse
 from data_utils import load_dialog_task, vectorize_data, load_candidates, vectorize_candidates, tokenize
 from six.moves import range, reduce
 from itertools import chain
@@ -113,6 +114,44 @@ def eval(utter_batch, memory_batch, answer__batch, dialog_idx, mem_cnn_sim, cuda
     return accuracy
 
 
+def interactive(model, indx2candid, cand_vec, word_idx, sentence_size, memory_size, cuda=False):
+    context = []
+    u = None
+    r = None
+    nid = 1
+    while True:
+        line = input('--> ').strip().lower()
+        if line == 'exit':
+            break
+        if line == 'restart':
+            context = []
+            nid = 1
+            print("clear memory")
+            continue
+        u = tokenize(line)
+        data = [(context, u, -1)]
+        s, q, a, entity_dict = vectorize_data(data, word_idx, sentence_size, memory_size)
+
+        memory = V(torch.from_numpy(np.stack(s)))
+        utter = V(torch.from_numpy(np.stack(q)))
+
+        if cuda:
+            memory = transfer_to_gpu(memory)
+            utter = transfer_to_gpu(utter)
+
+        preds = list(model.predict(utter, memory, cand_vec).data.cpu().numpy().tolist())
+        r = indx2candid[preds[0]]
+        print(r)
+        r = tokenize(r)
+        u.append('$u')
+        u.append('#' + str(nid))
+        r.append('$r')
+        r.append('#' + str(nid))
+        context.append(u)
+        context.append(r)
+        nid += 1
+
+
 def transfer_to_gpu(tensor, dtype=torch.LongTensor):
     tensor_cuda = dtype(tensor.size()).cuda()
     tensor_cuda = V(tensor_cuda)
@@ -157,6 +196,19 @@ def test_model(mem_cnn_sim):
 
 
 if __name__ == '__main__':
+
+    def get_bool(arg):
+        if arg.lower() in ('true', 't', 'yes'):
+            return True
+        else:
+            return False
+
+
+    parser = argparse.ArgumentParser()
+    parser.add_argument("-interactive", type=get_bool, default=False)
+
+    args = parser.parse_args()
+
     data_dir = "data/dialog-bAbI-tasks/"
     task_id = 6
     epochs = 20
@@ -166,6 +218,8 @@ if __name__ == '__main__':
     test_ = False
 
     cuda = torch.cuda.is_available()
+
+    print('task id: {}'.format(task_id))
     if cuda: print('Cuda is available.')
 
     candid2indx, \
@@ -213,6 +267,10 @@ if __name__ == '__main__':
     if cuda:
         mem_cnn_sim.cuda()
         cands_tensor = transfer_to_gpu(cands_tensor)
+
+    if args.interactive:
+        load_model(mem_cnn_sim, 'task{}+model/'.format(task_id))
+        interactive(mem_cnn_sim, indx2candid, cands_tensor, word_idx, sentence_size, memory_size, cuda)
 
     for i in range(1, epochs+1):
         num_ = [x for x in range(len(trainS))]
