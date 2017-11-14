@@ -81,7 +81,10 @@ def eval(utter_batch, memory_batch, answer__batch, dialog_idx, mem_cnn_sim, cuda
 
     total_loss = []
     preds = []
-    for start, end in dialog_idx:
+
+    dialog_len = len(utter_batch)
+    for start in range(dialog_len):
+        end = start
 
         loss_per_diaglo = []
 
@@ -98,7 +101,7 @@ def eval(utter_batch, memory_batch, answer__batch, dialog_idx, mem_cnn_sim, cuda
             pred = mem_cnn_sim.predict(context, cand_)
             preds.append(pred.data[0])
 
-            loss_per_diaglo.append(loss.data[0])
+            # loss_per_diaglo.append(loss.data[0])
 
         total_loss += loss_per_diaglo
 
@@ -156,7 +159,7 @@ def test_model(mem_cnn_sim):
 if __name__ == '__main__':
     data_dir = "data/dialog-bAbI-tasks/"
     task_id = 6
-    epochs = 10
+    epochs = 20
     model_dir = "task" + str(task_id) + "_model/"
     if not os.path.exists(model_dir):
         os.makedirs(model_dir)
@@ -188,8 +191,8 @@ if __name__ == '__main__':
     param = {
             'hops': 3,
             "vocab_size": vocab_size,
-            "embedding_size": 80,
-            'num_filters': 20,
+            "embedding_size": 100,
+            'num_filters': 100,
             "cand_vocab_size": vocab_size,
             'max_grad_norm': 40.0
              }
@@ -208,6 +211,7 @@ if __name__ == '__main__':
     num_dialog = len(dialog_idx)
 
     if cuda:
+        mem_cnn_sim.cuda()
         cands_tensor = transfer_to_gpu(cands_tensor)
 
     for i in range(1, epochs+1):
@@ -234,7 +238,6 @@ if __name__ == '__main__':
             flag = V(flag)
 
             if cuda:
-                mem_cnn_sim.cuda()
 
                 memory = transfer_to_gpu(memory)
                 utter = transfer_to_gpu(utter)
@@ -248,6 +251,10 @@ if __name__ == '__main__':
                 sys.stdout.write('\r{}/{}'.format(j, len(trainS)))
             # loss_per_diaglo.append(loss.data[0])
             # print('loss: {}'.format(sum(loss_per_diaglo)/len(loss_per_diaglo)))
+
+        print('\ntrain accuracy')
+        accuracy = eval(trainQ, trainS, trainA, dialog_idx, mem_cnn_sim, cuda)
+        print('eval accuracy')
         accuracy = eval(valQ, valS, valA, dialog_idx_val, mem_cnn_sim, cuda)
 
         if accuracy > best_validation_accuracy:
